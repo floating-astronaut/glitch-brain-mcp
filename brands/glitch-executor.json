@@ -1,0 +1,5 @@
+{
+  "brand_id": "glitch-executor",
+  "display_name": "Glitch Executor",
+  "agents": ["BSK-002", "BSK-003", "BSK-004", "BSK-005", "BSK-006", "BSK-007"]
+}
