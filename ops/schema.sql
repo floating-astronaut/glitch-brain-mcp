@@ -73,11 +73,20 @@ INSERT INTO agents (agent_sku, name) VALUES
   ('BSK-007', 'AI UGC Agent')
 ON CONFLICT (agent_sku) DO NOTHING;
 
--- Seed glitch-executor with all agents enabled.
+-- Seed brands from multi-store-theme-manager/SHOPIFY_STORES_INFRA.md
+-- (canonical source for brand families + storefronts).
 INSERT INTO brands (brand_id, display_name) VALUES
-  ('glitch-executor', 'Glitch Executor')
+  ('glitch-executor', 'Glitch Executor'),
+  ('urban-classics', 'Urban Classics'),
+  ('storico',        'Storico'),
+  ('classicoo',      'Classicoo'),
+  ('trendsetters',   'Trendsetters'),
+  ('ayurpet',        'Ayurpet'),
+  ('mokshya',        'Mokshya')
 ON CONFLICT DO NOTHING;
 
+-- Only glitch-executor uses all 6 agents today. Other brands start with
+-- nothing enabled; flip on per-agent as subscriptions are sold.
 INSERT INTO brand_agents (brand_id, agent_sku)
 SELECT 'glitch-executor', agent_sku FROM agents
 ON CONFLICT DO NOTHING;
