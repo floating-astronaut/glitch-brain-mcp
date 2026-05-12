@@ -85,8 +85,17 @@ INSERT INTO brands (brand_id, display_name) VALUES
   ('mokshya',        'Mokshya')
 ON CONFLICT DO NOTHING;
 
--- Only glitch-executor uses all 6 agents today. Other brands start with
--- nothing enabled; flip on per-agent as subscriptions are sold.
+-- glitch-executor uses all 6 agents.
 INSERT INTO brand_agents (brand_id, agent_sku)
 SELECT 'glitch-executor', agent_sku FROM agents
+ON CONFLICT DO NOTHING;
+
+-- Urban family + Ayurpet + Mokshya use the Ads agent (BSK-002) and SEO
+-- agent (BSK-006). The Shopify multi-store theme manager is separate
+-- infra (shopify.glitchexecutor.com), not one of the 6 AI agents.
+INSERT INTO brand_agents (brand_id, agent_sku)
+SELECT b.brand_id, a.agent_sku
+FROM (VALUES ('urban-classics'),('storico'),('classicoo'),
+             ('trendsetters'),('ayurpet'),('mokshya')) AS b(brand_id),
+     (VALUES ('BSK-002'),('BSK-006')) AS a(agent_sku)
 ON CONFLICT DO NOTHING;
