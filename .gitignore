@@ -1,0 +1,5 @@
+.venv/
+.env
+tokens.issued.txt
+__pycache__/
+*.egg-info/

@@ -174,7 +174,10 @@ async def healthz(_: Request):
 
 
 def build_app() -> Starlette:
-    session_manager = mcp.session_manager  # FastMCP wires this up
+    # Build the streamable-HTTP app first; this lazily creates the session
+    # manager, which we then drive from our lifespan.
+    streamable_app = mcp.streamable_http_app()
+    session_manager = mcp.session_manager
 
     @contextlib.asynccontextmanager
     async def lifespan(app):
@@ -185,7 +188,7 @@ def build_app() -> Starlette:
         debug=False,
         routes=[
             Route("/healthz", healthz),
-            Mount("/mcp", app=mcp.streamable_http_app()),
+            Mount("/mcp", app=streamable_app),
         ],
         middleware=[Middleware(BearerAuthMiddleware)],
         lifespan=lifespan,
