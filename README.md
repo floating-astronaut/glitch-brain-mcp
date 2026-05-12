@@ -31,10 +31,20 @@ Cross-brand reads are never allowed.
 
 ## Tools (MCP)
 
+**Memory (facts):**
 - `remember(content, kind, scope='agent', key?, agent_sku?, metadata?, ttl?)`
 - `recall(kind?, key?, agent_sku?, include_shared=true, limit=20)`
 - `search(query, agent_sku?, include_shared=true, limit=10)` — trigram similarity
 - `forget(memory_id)`
+
+**Brain (collaboration):**
+- `append_activity(action, summary, subject?, payload?, agent_sku?)` — log what this agent just did; siblings see it
+- `recent_activity(agent_sku?, exclude_self=false, limit=20)` — read the timeline
+- `set_state(current_focus?, blockers?, next_step?)` — publish what this agent is working on (fields merged, nulls ignored)
+- `team_state()` — what every enabled agent on the brand is currently up to
+- `briefing(activity_limit=10, memory_limit=5)` — one-shot context bundle: sibling states + recent sibling activity + shared memories. Call at the start of every agent run.
+
+**Live events:** Postgres `NOTIFY` channel `brain_<brand_id>` (dashes → underscores). Payload is JSON `{kind: 'activity'|'state', ...}`. Use `LISTEN brain_glitch_executor` from any client; `brain.subscribe()` provides this as an async generator in Python.
 
 ## First-time setup
 

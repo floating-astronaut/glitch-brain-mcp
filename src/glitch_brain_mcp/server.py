@@ -14,6 +14,7 @@ from starlette.routing import Mount, Route
 
 from .auth import Principal, resolve_token
 from . import memory as mem
+from . import brain as br
 
 # Context var: per-request authenticated principal.
 import contextvars
@@ -86,6 +87,70 @@ async def forget(memory_id: int) -> dict[str, bool]:
     """Delete a memory by id (must belong to caller's brand/agent scope)."""
     ok = await mem.forget(_require_principal(), memory_id=memory_id)
     return {"deleted": ok}
+
+
+# -------- Brain layer: activity + state + briefing --------
+
+@mcp.tool()
+async def append_activity(
+    action: str,
+    summary: str,
+    subject: str | None = None,
+    payload: dict[str, Any] | None = None,
+    agent_sku: str | None = None,
+) -> dict[str, Any]:
+    """Log what this agent just did. Siblings see it via briefing/subscribe."""
+    return await br.append_activity(
+        _require_principal(),
+        action=action, summary=summary, subject=subject,
+        payload=payload, agent_sku=agent_sku,
+    )
+
+
+@mcp.tool()
+async def recent_activity(
+    agent_sku: str | None = None,
+    exclude_self: bool = False,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """Recent activity entries for the brand (optionally filtered to one agent)."""
+    return await br.recent_activity(
+        _require_principal(),
+        agent_sku=agent_sku, exclude_self=exclude_self, limit=limit,
+    )
+
+
+@mcp.tool()
+async def set_state(
+    current_focus: str | None = None,
+    blockers: str | None = None,
+    next_step: str | None = None,
+    agent_sku: str | None = None,
+) -> dict[str, Any]:
+    """Publish what this agent is currently working on. Fields are merged, not overwritten with NULL."""
+    return await br.set_state(
+        _require_principal(),
+        current_focus=current_focus, blockers=blockers,
+        next_step=next_step, agent_sku=agent_sku,
+    )
+
+
+@mcp.tool()
+async def team_state() -> list[dict[str, Any]]:
+    """What every enabled agent on this brand is currently up to."""
+    return await br.team_state(_require_principal())
+
+
+@mcp.tool()
+async def briefing(
+    activity_limit: int = 10,
+    memory_limit: int = 5,
+) -> dict[str, Any]:
+    """One-shot 'what is the team doing': sibling states + recent sibling activity + shared memories. Call at the start of every run."""
+    return await br.briefing(
+        _require_principal(),
+        activity_limit=activity_limit, memory_limit=memory_limit,
+    )
 
 
 class BearerAuthMiddleware(BaseHTTPMiddleware):
