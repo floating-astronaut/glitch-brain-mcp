@@ -91,11 +91,17 @@ SELECT 'glitch-executor', agent_sku FROM agents
 ON CONFLICT DO NOTHING;
 
 -- Urban family + Ayurpet + Mokshya use the Ads agent (BSK-002) and SEO
--- agent (BSK-006). The Shopify multi-store theme manager is separate
--- infra (shopify.glitchexecutor.com), not one of the 6 AI agents.
+-- agent (BSK-006). All also use the multi-store Shopify theme manager,
+-- which is INTERNAL-ONLY infra (not publicly sold, not one of the 6 AI
+-- agents) — lives at shopify.glitchexecutor.com / port 3101.
 INSERT INTO brand_agents (brand_id, agent_sku)
 SELECT b.brand_id, a.agent_sku
 FROM (VALUES ('urban-classics'),('storico'),('classicoo'),
              ('trendsetters'),('ayurpet'),('mokshya')) AS b(brand_id),
      (VALUES ('BSK-002'),('BSK-006')) AS a(agent_sku)
+ON CONFLICT DO NOTHING;
+
+-- Ayurpet additionally uses the Social Media agent (BSK-004).
+INSERT INTO brand_agents (brand_id, agent_sku) VALUES
+  ('ayurpet', 'BSK-004')
 ON CONFLICT DO NOTHING;
