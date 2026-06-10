@@ -74,7 +74,7 @@ async def search(
     include_shared: bool = True,
     limit: int = 10,
 ) -> list[dict[str, Any]]:
-    """Trigram similarity search over memory content."""
+    """Hybrid search over memory content: trigram + local semantic embeddings, RRF-fused."""
     return await mem.search(
         _require_principal(),
         query=query, agent_sku=agent_sku,

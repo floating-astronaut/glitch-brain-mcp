@@ -9,5 +9,11 @@ class Settings(BaseSettings):
     port: int = 3107
     log_level: str = "info"
 
+    # Local semantic search (fastembed/ONNX). Dim must match the
+    # memories.embedding column — see ops/migrations/003_semantic_search.sql.
+    embeddings_enabled: bool = True
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_cache_dir: str = ".fastembed_cache"
+
 
 settings = Settings()

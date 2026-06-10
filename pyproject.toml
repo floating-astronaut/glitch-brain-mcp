@@ -15,6 +15,7 @@ dependencies = [
   "python-dotenv>=1.0",
   "structlog>=24.4",
   "click>=8.1",
+  "fastembed>=0.5",
 ]
 
 [project.optional-dependencies]

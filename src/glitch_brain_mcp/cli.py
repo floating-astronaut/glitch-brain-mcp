@@ -90,5 +90,37 @@ def tokens_revoke(token):
     click.echo("revoked")
 
 
+@main.command("embed-backfill")
+@click.option("--batch", default=64, show_default=True)
+def embed_backfill(batch):
+    """Embed memories that have no embedding yet (local model, no API)."""
+    from . import embeddings
+
+    async def _run():
+        pool = await get_pool()
+        total = 0
+        while True:
+            rows = await pool.fetch(
+                "SELECT id, content FROM memories WHERE embedding IS NULL "
+                "AND (ttl IS NULL OR ttl > now()) ORDER BY id LIMIT $1", batch,
+            )
+            if not rows:
+                break
+            for r in rows:
+                vec = await embeddings.embed(r["content"])
+                if vec is None:
+                    click.echo("embedder unavailable; aborting", err=True)
+                    return total
+                await pool.execute(
+                    "UPDATE memories SET embedding = $1::vector WHERE id = $2",
+                    embeddings.vec_literal(vec), r["id"],
+                )
+                total += 1
+        return total
+
+    n = asyncio.run(_run())
+    click.echo(f"embedded {n} memories")
+
+
 if __name__ == "__main__":
     main()

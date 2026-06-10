@@ -3,3 +3,7 @@
 tokens.issued.txt
 __pycache__/
 *.egg-info/
+.fastembed_cache/
+install.log
+.env.bak*
+install.sh

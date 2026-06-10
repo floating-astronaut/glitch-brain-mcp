@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS memories (
   key          text,                    -- optional dedupe key
   content      text NOT NULL,
   metadata     jsonb NOT NULL DEFAULT '{}'::jsonb,
-  embedding    vector(1536),            -- optional, populated later
+  embedding    vector(384),             -- local all-MiniLM-L6-v2 (fastembed)
   ttl          timestamptz,             -- optional expiry
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now(),
@@ -62,6 +62,8 @@ CREATE INDEX IF NOT EXISTS memories_content_trgm_idx
   ON memories USING gin (content gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS memories_metadata_idx
   ON memories USING gin (metadata);
+CREATE INDEX IF NOT EXISTS memories_embedding_hnsw_idx
+  ON memories USING hnsw (embedding vector_cosine_ops);
 
 -- Seed catalog from grow site products.ts
 INSERT INTO agents (agent_sku, name) VALUES

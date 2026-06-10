@@ -34,7 +34,10 @@ Cross-brand reads are never allowed.
 **Memory (facts):**
 - `remember(content, kind, scope='agent', key?, agent_sku?, metadata?, ttl?)`
 - `recall(kind?, key?, agent_sku?, include_shared=true, limit=20)`
-- `search(query, agent_sku?, include_shared=true, limit=10)` — trigram similarity
+- `search(query, agent_sku?, include_shared=true, limit=10)` — hybrid: trigram + local
+  semantic embeddings (all-MiniLM-L6-v2 via fastembed, 384d), RRF-fused (k=60).
+  Each hit carries `match`: `trigram` | `vector` | `hybrid`. Degrades to
+  trigram-only if the embedder is unavailable.
 - `forget(memory_id)`
 
 **Brain (collaboration):**
@@ -43,6 +46,13 @@ Cross-brand reads are never allowed.
 - `set_state(current_focus?, blockers?, next_step?)` — publish what this agent is working on (fields merged, nulls ignored)
 - `team_state()` — what every enabled agent on the brand is currently up to
 - `briefing(activity_limit=10, memory_limit=5)` — one-shot context bundle: sibling states + recent sibling activity + shared memories. Call at the start of every agent run.
+
+**Semantic search (added 2026-06-10):** memories are embedded locally on
+`remember` (fastembed/ONNX, no API calls, model cached in `.fastembed_cache/`).
+Backfill older rows with `glitch-brain-mcp embed-backfill`. Config knobs
+(`.env`, prefix `BRAIN_`): `EMBEDDINGS_ENABLED`, `EMBEDDING_MODEL`,
+`EMBEDDING_CACHE_DIR`. Column is `vector(384)` + HNSW index
+(`ops/migrations/003_semantic_search.sql`).
 
 **Live events:** Postgres `NOTIFY` channel `brain_<brand_id>` (dashes → underscores). Payload is JSON `{kind: 'activity'|'state', ...}`. Use `LISTEN brain_glitch_executor` from any client; `brain.subscribe()` provides this as an async generator in Python.
 
