@@ -15,5 +15,13 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     embedding_cache_dir: str = ".fastembed_cache"
 
+    # Amazon Bedrock Titan embeddings (policy: internal AI on AWS credits).
+    # When true, embed() uses Titan (1024d) instead of local MiniLM (384d).
+    # Dim must match the memories.embedding column (ops/migrations/004).
+    platform_llm_via_bedrock: bool = False
+    bedrock_region: str = "us-east-2"
+    bedrock_embed_model: str = "amazon.titan-embed-text-v2:0"
+    bedrock_embed_dim: int = 1024
+
 
 settings = Settings()

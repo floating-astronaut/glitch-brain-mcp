@@ -44,10 +44,38 @@ def _embed_sync(text: str) -> list[float] | None:
     return vec.tolist()
 
 
+_bedrock = None
+
+
+def _bedrock_client():
+    global _bedrock
+    if _bedrock is None:
+        import boto3
+        _bedrock = boto3.client("bedrock-runtime", region_name=settings.bedrock_region)
+    return _bedrock
+
+
+def _embed_bedrock_sync(text: str) -> list[float] | None:
+    """Amazon Bedrock Titan Text Embeddings V2 (instance-role creds)."""
+    import json
+    try:
+        body = json.dumps({"inputText": text[:8000],
+                           "dimensions": settings.bedrock_embed_dim,
+                           "normalize": True})
+        r = _bedrock_client().invoke_model(modelId=settings.bedrock_embed_model, body=body)
+        return json.loads(r["body"].read()).get("embedding")
+    except Exception as exc:  # noqa: BLE001 — degrade to trigram search
+        log.warning("embeddings.bedrock_failed", error=str(exc))
+        return None
+
+
 async def embed(text: str) -> list[float] | None:
     """Embed one text off the event loop. None when disabled/unavailable."""
     if not settings.embeddings_enabled:
         return None
+    if settings.platform_llm_via_bedrock:
+        # Titan is stateless/thread-safe; no lock needed.
+        return await asyncio.to_thread(_embed_bedrock_sync, text)
     # Single in-flight embed: the ONNX session is not thread-safe to share
     # and this also prevents a duplicate model load on first concurrent use.
     async with _lock:
